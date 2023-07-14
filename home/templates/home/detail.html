@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <small>{{ post.user.username }} - {{ post.created|timesince}}</small>
+    <p>{{ post.body }}</p>
+    {% if request.user.id == post.user.id %}
+        <a href="{% url 'home:post_delete' post.id %}" class="btn btn-danger">Delete</a>
+        <a href="{% url 'home:update_post' post.id %}" class="btn btn-primary">Update</a>
+    {% endif %}
+    <a href="{% url 'account:user_profile' post.user.id %}" class="btn btn-primary">Profile</a>
+
+
+    {% if request.user.is_authenticated %}
+        <a href="{% url 'home:post_like' post.id %}" class="{% if can_like %}disabled{% endif %}btn btn-danger">like {{ post.like_count }}</a>
+        <form action="" method="post" class="form-group">
+
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="send">
+        </form>
+
+    {% else %}
+            <p>for comment you must log in</p>
+    {% endif %}
+
+    <p>{{ comments.count }} comment</p>
+    {% for comment in comments %}
+        <div class="card">
+            <p class="card-header">{{ comment.user }} | {{ comment.created|timesince }}</p>
+            <p class="card-body">{{ comment.body }}</p>
+            <button class="btn btn-primary">Reply</button>
+            {% if request.user.is_authenticated %}
+                <form action="{% url 'home:add_reply' post.id comment.id %}" method="post">
+                    {% csrf_token %}
+                    {{ reply_form.as_p }}
+                    <input type="submit" value="Send">
+                </form>
+            {% endif %}
+            {% with replies=comment.rcomments.all %}
+            {% for reply in replies %}
+                <p class="card-subtitle text-white bg-secondary p-3 m-3">{{ reply.body }}
+                <small>{{ reply.created|timesince }}</small>
+                </p>
+
+                {% endfor %}
+                {% endwith %}
+    {% empty %}
+        <p class="card">there is no comment yet</p>
+    {% endfor %}
+        </div>
+
+{% endblock %}
